@@ -21,14 +21,18 @@ import com.learnova.classedge.security.filter.JwtCheckFilter;
 import com.learnova.classedge.security.handler.ApiLoginFailureHandler;
 import com.learnova.classedge.security.handler.ApiLoginSuccessHandler;
 import com.learnova.classedge.security.handler.DetailAccessDeniedHandler;
+import com.learnova.classedge.service.MemberLoginService;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity // 웹 시큐리티 활성화
 @EnableMethodSecurity // 메소드 관련 인가 처리 
+@RequiredArgsConstructor
 public class SecurityConfig {
-
+    private final MemberLoginService memberLoginService;
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
+    protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
         http.cors((conf)->{
             conf.configurationSource(corsConfigurationSource());
         });
@@ -38,8 +42,9 @@ public class SecurityConfig {
         http.sessionManagement(conf->{
             conf.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         });
+        http.userDetailsService(memberLoginService);
         http.formLogin(conf->{
-            conf.loginPage("/api/v1/login/go"); // 로그인 요청 처리 엔드포인트 URI ex) /api/v1/login
+            conf.loginPage("/api/v1/login"); // 로그인 요청 처리 엔드포인트 URI ex) /api/v1/login
             conf.successHandler(new ApiLoginSuccessHandler());
             conf.failureHandler(new ApiLoginFailureHandler());
         });
@@ -53,11 +58,11 @@ public class SecurityConfig {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder(){
+    protected PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
     }
     @Bean
-    public CorsConfigurationSource corsConfigurationSource(){
+    protected CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration configuration = new CorsConfiguration();
 
         // 추후 접속하는 URL:PORT 로 수정필요
